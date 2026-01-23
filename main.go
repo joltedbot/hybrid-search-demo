@@ -73,16 +73,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		resultCount := results.Hits.Total.Value
-		hitCount := len(results.Hits.Hits)
-
-		for i := range hitCount - 1 {
-			source := results.Hits.Hits[i].Source
-			score := results.Hits.Hits[i].Score
-			fmt.Printf("Score:   %f\nProduct:   %s\nTitle:     %s\nURL:       %s\nWhat you should do:\n%s\n\n-------------\n", score, source["Product"], source["Title"], source["URL"], source["What you should do"])
-		}
-
-		fmt.Printf("\n\nReturned top %d of the %d results\n\n", hitCount, resultCount)
+		printResults(results)
 
 	}
 
