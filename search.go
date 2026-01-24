@@ -9,8 +9,8 @@ import (
 	"github.com/elastic/go-elasticsearch/v9"
 )
 
-const SEMENTIC_TEXT_RANK_BOOST = 0.75
-const MININUM_SCORE = 0.5
+const MAX_RESULTS = 10
+const MIN_RESULTS = 1
 
 func runQuery(es *elasticsearch.Client, searchIndex string, searchTerms string) (string, error) {
 
@@ -22,33 +22,36 @@ func runQuery(es *elasticsearch.Client, searchIndex string, searchTerms string) 
 					{
 						"standard": {
 							"query": {
-								"match": {
-									"Product": "%s"
+								"semantic": {
+									"field": "semantic_text",
+									"query": "%s"
 								}
 							}
 						}
 					},
 					{
 						"standard": {
-							"min_score": %f,
 							"query": {
-								"semantic": {
-									"field": "semantic_text",
+								"multi_match": {
 									"query": "%s",
-									"boost": %f
+									"fields": ["Product", "Title", "Organization", "Category", "What you should do"]
 								}
 							}
 						}
 					}
-				]
+				],
+				"rank_constant": 20,
+				"rank_window_size": 50
 			}
 		}
-	}`, trimmed, MININUM_SCORE, trimmed, SEMENTIC_TEXT_RANK_BOOST)
+	}`, trimmed, trimmed)
 
 	returned, err := es.Search(
 		es.Search.WithIndex(searchIndex),
 		es.Search.WithBody(strings.NewReader(query)),
 		es.Search.WithTrackTotalHits(true),
+		es.Search.WithFrom(MIN_RESULTS),
+		es.Search.WithSize(MAX_RESULTS),
 		es.Search.WithPretty(),
 	)
 	if err != nil {

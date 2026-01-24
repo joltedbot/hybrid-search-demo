@@ -56,16 +56,22 @@ func main() {
 		buffer := bufio.NewReader(os.Stdin)
 		searchTerms, err := buffer.ReadString('\n')
 		if err != nil {
-			fmt.Println("Bad search terms. Try again!")
+			fmt.Println("\nBad search terms. Try again!")
 			continue
 		}
 
-		fmt.Printf("Retrieving results for: %s\n", strings.TrimSpace(searchTerms))
+		if searchTerms == "\n" {
+			fmt.Println("\nSearch terms can not be empty. Try again!")
+			continue
+		}
 
+		fmt.Printf("Retrieving results for: %s\n\n", strings.TrimSpace(searchTerms))
 		queryResult, err := runQuery(es, searchIndex, searchTerms)
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		fmt.Printf("\n-------------\n")
 
 		results := Result{}
 		err = json.Unmarshal([]byte(queryResult), &results)
