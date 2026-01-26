@@ -16,7 +16,7 @@ func main() {
 
 	apiKey := os.Getenv("ES_API_KEY")
 	esUrl := os.Getenv("ES_SERVER_URL")
-	searchIndex := os.Getenv("ES_SEACH_INDEX")
+	searchIndex := os.Getenv("ES_SEARCH_INDEX")
 
 	if apiKey == "" || esUrl == "" {
 		fmt.Println("Please set environmental variables ES_API_KEY, ES_SERVER_URL, ES_SEARCH_INDEX to your ES API key, ES Server's URL, and index to search and try again")
