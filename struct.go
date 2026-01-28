@@ -27,7 +27,7 @@ type Total struct {
 
 type Hit struct {
 	Index   string                 `json:"_index"`
-	ID      string                 `json:"_id"`
+	ID      int                    `json:"_id"`
 	Score   float64                `json:"_score"`
 	Ignored []string               `json:"_ignored,omitempty"`
 	Source  map[string]interface{} `json:"_source"`
