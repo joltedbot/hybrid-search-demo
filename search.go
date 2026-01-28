@@ -43,7 +43,7 @@ func runQuery(es *elasticsearch.Client, searchIndex string, searchTerms string) 
           "standard": {
             "query": {
               "multi_match": {
-                "query": "{query}",
+                "query": "%s",
                 "fields": [
                   "Product",
                   "Title",
@@ -57,7 +57,7 @@ func runQuery(es *elasticsearch.Client, searchIndex string, searchTerms string) 
         }
       ],
       "rank_constant": 20,
-				"rank_window_size": 50
+	  "rank_window_size": 50
     }
   },
   "highlight": {
@@ -74,7 +74,7 @@ func runQuery(es *elasticsearch.Client, searchIndex string, searchTerms string) 
       }
     }
   }
-}`, trimmed, trimmed)
+}`, trimmed, trimmed, trimmed)
 
 	returned, err := es.Search(
 		es.Search.WithIndex(searchIndex),
