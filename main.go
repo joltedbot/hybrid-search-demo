@@ -1,86 +1,49 @@
 package main
 
 import (
-	"bufio"
-	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
 	"github.com/elastic/go-elasticsearch/v9"
 )
 
 func main() {
-
 	apiKey := os.Getenv("ES_API_KEY")
 	esUrl := os.Getenv("ES_SERVER_URL")
 	searchIndex := os.Getenv("ES_SEARCH_INDEX")
 
-	if apiKey == "" || esUrl == "" {
-		fmt.Println("Please set environmental variables ES_API_KEY, ES_SERVER_URL, ES_SEARCH_INDEX to your ES API key, ES Server's URL, and index to search and try again")
+	if apiKey == "" || esUrl == "" || searchIndex == "" {
+		fmt.Println("Please set environmental variables ES_API_KEY, ES_SERVER_URL, ES_SEARCH_INDEX and try again.")
 		os.Exit(1)
 	}
 
-	configuration := elasticsearch.Config{
-		Addresses: []string{
-			esUrl,
-		},
-		APIKey: apiKey,
-	}
-
-	es, err := elasticsearch.NewClient(configuration)
+	esClient, err := setupElasticsearch(esUrl, apiKey)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error setting up Elasticsearch: %s", err)
 	}
 
-	defer es.Close(context.Background())
+	hybridSearchApp := app.New()
+	appWindow := hybridSearchApp.NewWindow("Hybrid Search Demo")
+	appWindow.Resize(fyne.NewSize(1000, 800))
 
-	/*
-		connectionInfo, err := es.Info()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Printf("\nSuccessfully Connected:\n%s\n\n", connectionInfo)
-	*/
-
-	fmt.Printf("\nSuccessfully Connected\n\n")
-
-	fmt.Println("\n\nWelcome to the Hybrid Search Demo Tool!")
-
-	for {
-		fmt.Println("\n What product would you like to search for?:")
-		fmt.Print("> ")
-		buffer := bufio.NewReader(os.Stdin)
-		searchTerms, err := buffer.ReadString('\n')
-		if err != nil {
-			fmt.Println("\nBad search terms. Try again!")
-			continue
-		}
-
-		if searchTerms == "\n" {
-			fmt.Println("\nSearch terms can not be empty. Try again!")
-			continue
-		}
-
-		fmt.Printf("Retrieving results for: %s\n\n", strings.TrimSpace(searchTerms))
-		queryResult, err := runQuery(es, searchIndex, searchTerms)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Printf("\n-------------\n")
-
-		results := Result{}
-		err = json.Unmarshal([]byte(queryResult), &results)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		printResults(results)
-
+	uiConfig := &Configuration{
+		esClient:    esClient,
+		searchIndex: searchIndex,
+		app:         hybridSearchApp,
+		window:      appWindow,
 	}
 
+	uiConfig.buildUI()
+	uiConfig.window.ShowAndRun()
+}
+
+func setupElasticsearch(url, apiKey string) (*elasticsearch.Client, error) {
+	config := elasticsearch.Config{
+		Addresses: []string{url},
+		APIKey:    apiKey,
+	}
+	return elasticsearch.NewClient(config)
 }
