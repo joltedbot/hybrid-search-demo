@@ -5,8 +5,7 @@ import (
 	"log"
 	"os"
 
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/elastic/go-elasticsearch/v9"
 )
 
@@ -25,19 +24,12 @@ func main() {
 		log.Fatalf("Error setting up Elasticsearch: %s", err)
 	}
 
-	hybridSearchApp := app.New()
-	appWindow := hybridSearchApp.NewWindow("Hybrid Search Demo")
-	appWindow.Resize(fyne.NewSize(1000, 800))
+	m := initialModel(esClient, searchIndex)
+	p := tea.NewProgram(m, tea.WithAltScreen())
 
-	uiConfig := &Configuration{
-		esClient:    esClient,
-		searchIndex: searchIndex,
-		app:         hybridSearchApp,
-		window:      appWindow,
+	if _, err := p.Run(); err != nil {
+		log.Fatalf("Alas, there's been an error: %v", err)
 	}
-
-	uiConfig.buildUI()
-	uiConfig.window.ShowAndRun()
 }
 
 func setupElasticsearch(url, apiKey string) (*elasticsearch.Client, error) {

@@ -36,14 +36,14 @@ You will need to setup 3 environmental variables:
 - ES_SERVER_URL = full URL to your severless Elasticsearch Instance (https://????:443)
 - ES_SEARCH_INDEX = the name of the index you created for the semantic_text using the mapping above
 
-Then build and or run the app with no cli flags
-```
-$ go build
-$ ./hybrid-search-demo
-```
-
-or 
+Then run the app with no cli flags. This will launch a Terminal User Interface (TUI).
 
 ```
 $ go run .
 ```
+
+### Usage
+- **Type** your search query into the input box.
+- Press **Enter** to execute the search.
+- Use the **Up/Down Arrow Keys** to scroll through results.
+- Press **Ctrl+C** or **Esc** to quit the application.
