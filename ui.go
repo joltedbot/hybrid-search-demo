@@ -20,6 +20,7 @@ var (
 	separator   = lipgloss.NewStyle().Foreground(lipgloss.Color("238")).Render(strings.Repeat("─", 80))
 	resultTitle = lipgloss.NewStyle().Bold(true)
 	resultScore = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	scrollHintStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("87"))
 )
 
 type (
@@ -137,16 +138,53 @@ func (m model) View() string {
 	if m.err != nil {
 		b.WriteString(fmt.Sprintf("Error: %v\n", m.err))
 	} else {
-		b.WriteString(m.viewport.View())
+		var viewportContent string
+		if m.viewport.TotalLineCount() > m.viewport.Height { // Only show indicators if scrollable
+			if m.viewport.YOffset > 0 {
+				viewportContent += scrollHintStyle.Width(m.viewport.Width).Align(lipgloss.Right).Render("↑") + "\n"
+			}
+		}
+		viewportContent += m.viewport.View()
+
+		b.WriteString(viewportContent)
 	}
 
-	footerText := "Use ↑/↓ to scroll | Ctrl+C to quit"
-
+	// Construct the core footer message
+	coreFooterContent := "Use ↑/↓ to scroll | Ctrl+C to quit"
 	if len(m.results.Hits.Hits) > 0 {
-		footerText = fmt.Sprintf("%d results | %s", len(m.results.Hits.Hits), footerText)
+		coreFooterContent = fmt.Sprintf("%d results | %s", len(m.results.Hits.Hits), coreFooterContent)
 	}
 
-	b.WriteString(helpStyle.Render(footerText))
+	// Render core footer with its style
+	renderedCoreFooter := helpStyle.Render(coreFooterContent)
+	coreFooterWidth := lipgloss.Width(renderedCoreFooter)
+
+	// Prepare down arrow, if needed
+	downArrowRendered := ""
+	downArrowWidth := 0
+	if m.viewport.TotalLineCount() > m.viewport.Height {
+		if (m.viewport.YOffset + m.viewport.Height) < m.viewport.TotalLineCount() {
+			downArrowRendered = scrollHintStyle.Render("↓")
+			downArrowWidth = lipgloss.Width(downArrowRendered)
+		}
+	}
+
+	// Calculate total width of the rendered line (viewport width)
+	totalWidth := m.viewport.Width
+
+	// Calculate padding needed
+	paddingWidth := totalWidth - coreFooterWidth - downArrowWidth
+	if paddingWidth < 0 {
+		paddingWidth = 0 // Ensure padding is not negative
+	}
+
+	// Build the final footer line
+	finalFooterLine := renderedCoreFooter
+	if downArrowRendered != "" {
+		finalFooterLine += strings.Repeat(" ", paddingWidth) + downArrowRendered
+	}
+
+	b.WriteString(finalFooterLine)
 
 	return b.String()
 }
@@ -169,7 +207,8 @@ func (m model) formatResults() string {
 		))
 
 		if whatYouShouldDo != "" {
-			s.WriteString(docStyle.Render(fmt.Sprintf("What to do: %s", whatYouShouldDo)))
+			whatToDoStyle := docStyle.Copy().Width(m.viewport.Width - 4)
+			s.WriteString(whatToDoStyle.Render(fmt.Sprintf("What to do: %s", whatYouShouldDo)))
 		}
 
 		if i < len(m.results.Hits.Hits)-1 {
